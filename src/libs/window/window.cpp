@@ -42,9 +42,9 @@ int Window::create(lua_State *L) {
     windowCreated = true;
 
     // Get Lua parameters
-    unsigned int width = lua_tointeger(L, 1);
-    unsigned int height = lua_tointeger(L, 2);
-    const char *title = lua_tostring(L, 3);
+    unsigned int width = luaL_checkinteger(L, 1);
+    unsigned int height = luaL_checkinteger(L, 2);
+    const char *title = luaL_checkstring(L, 3);
 
     // Initialize SDL2
     SDL_Init(SDL_INIT_VIDEO);
