@@ -4,8 +4,20 @@
 
 // declare event as a template to have run time checks
 template <typename T>
-class Event{
+class Event {
+
+}
+
+template <typename T>
+class EventConnector
+{
     
+}
+
+class EventSystem
+{
+public:
+std::map<   
 }
 
 #endif
