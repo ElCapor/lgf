@@ -1,81 +1,92 @@
 #pragma once
 #ifndef EVENTS_HPP
 #define EVENTS_HPP
+#include <unordered_set>
+#include <vector>
+/*
+https://www.linkedin.com/pulse/students-take-implementing-event-systems-games-using-matthew-rosen
+
+Took the headers and implenting all the functions by myself - elcapor
+*/
+
+/*
+SINGLETON Implementation
+*/
+template <typename T>
+class Singleton {
+public:
+    static T& getInstance() {
+        static T instance; // This will be created only once
+        return instance;
+    }
+
+    // Delete copy constructor and assignment operator to prevent duplication
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+protected:
+    Singleton() = default;
+    virtual ~Singleton() = default;
+};
+
+
+
+template<typename T>
+using UniqueContainer = std::unordered_set<T>;
+
+
+enum EventType
+{
+  e_GameStartEvent = 0,
+
+  e_EventTypeMax
+};
 
 class Event
 {
 public:
-  virtual~ Event();
-
-  using DescriptorType const char*;
-
-  virtual DescriptorType type() const = 0;
+  explicit Event(EventType type) : m_type(type) {}
+  EventType m_type;
 };
 
-
-class DemoEvent : public Event
+class EventListener
 {
 public:
-  DemoEvent();
-  virtual ~DemoEvent();
+  virtual void OnEvent(Event *received) = 0;
+  void Subscribe(EventType type);
+  void Unsubscribe(EventType type);
+  void UnsubscribeAll();
 
-  static constexpr DescriptorType descriptor = "DemoEvent";
+  virtual ~EventListener() { UnsubscribeAll(); }
 
-  virtual DescriptorType type() const
-  {
-    return descriptor;
-  }
-};
-
-
-class Dispatcher
-{
-public:
-
-  using SlotType = std::function< void( const Event& ) >;
-
-  void subscribe( const Event::DescriptorType& descriptor, SlotType&& slot );
-
-  void post( const Event& event ) const;
 
 private:
-
- std::map< Event::DescriptorType, std::vector<SlotType> > _observers;
+  UniqueContainer<EventType> m_subscribeList;
 };
 
 
-void Dispatcher::subscribe( const Event::DescriptorType& descriptor, SlotType&& slot )
-{
-  _observers[descriptor].push_back( slot );
-}
+// assume singleton<T> exists
 
-void Dispatcher::post( const Event& event ) const
-{
-  auto type = event.type();
-
-  // Ignore events for which we do not have an observer (yet).
-  if( _observers.find( type ) == _observers.end() )
-    return;
-
-  auto&& observers = _observers.at( type );
-
-  for( auto&& observer : observers )
-    observer( event );
-}
-
-class ClassObserver
+template<typename T>
+using UniqueContainer = std::unordered_set<T>;
+class EventManager : public Singleton<EventManager>
 {
 public:
-  void handle( const Event& e )
-  {
-    if( e.type() == DemoEvent::descriptor )
-    {
-      // This demonstrates how to obtain the underlying event type in case a
-      // slot is set up to handle multiple events of different types.
-      const DemoEvent& demoEvent = static_cast<const DemoEvent&>( e );
-      std::cout << __PRETTY_FUNCTION__ << ": " << demoEvent.type() << std::endl;
-    }
-  }
+  void Init();
+  void Update();
+  void Exit();
+
+  void RemoveListener(EventListener *listener);
+  void SendEvent(Event *sent);
+
+  // future functionality:// void QueueEvent(Event *sent, float delay = 0.0f);  
+
+private:
+  friend class EventListener;
+  void Subscribe(EventType type, EventListener *listener);
+  void Unsubscribe(EventType type, EventListener *listener);
+
+  std::vector<UniqueContainer<EventListener*>> m_listeners;
 };
 
 #endif
